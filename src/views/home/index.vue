@@ -1,50 +1,60 @@
-<!--
- * @Author: your name
- * @Date: 2021-07-26 20:40:09
- * @LastEditTime: 2021-07-26 20:43:54
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /cloud-media-web/src/views/home/index.vue
--->
 <template>
-  <div class="home-page">
-    <Banner />
-  </div>
+  <div class="canvas-parent" />
 </template>
 
 <script>
-import Banner from './banner.vue'
+import TrackCanvas from './track-canvas.js'
 
 export default {
-  components: {
-    Banner
-  },
-  props: {
-
-  },
+  components: {},
   data() {
     return {
-
+      cart: {
+        name: 'DF4D147',
+        typeName: 'track_1',
+        coordinate: [400, 500]
+      },
+      TrackCanvas: null,
+      time: null
     }
   },
-  computed: {
-
-  },
-  watch: {
-
-  },
+  computed: {},
+  watch: {},
   created() {
 
   },
   mounted() {
+    const parent = document.querySelector('.canvas-parent')
+    this.TrackCanvas = new TrackCanvas(parent)
+    this.TrackCanvas.draw()
 
+    if (this.cart.coordinate[0] >= 2000) {
+      clearInterval(this.time)
+      this.time = null
+    } else {
+      this.setCartPositon(() => {
+        console.log(this.cart)
+        this.TrackCanvas.clearCanvas(this.cart)
+        this.TrackCanvas.draw(this.cart)
+        this.TrackCanvas.drawCart(this.cart)
+      })
+    }
   },
   methods: {
-
+    setCartPositon(callBack) {
+      let x = 400
+      const y = 500
+      this.time = setInterval(() => {
+        this.cart.coordinate = [x += 10, y]
+        callBack()
+      }, 1000)
+    }
   }
 }
 </script>
 
-<style scoped lang="scss">
-
+<style lang='scss' scoped>
+.canvas-parent {
+    margin: 20px;
+}
 </style>

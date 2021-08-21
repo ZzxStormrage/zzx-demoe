@@ -8,7 +8,6 @@
 -->
 <template>
   <div id="app-main">
-    <HomeAppBar />
     <HomeView />
   </div>
 </template>
@@ -16,7 +15,6 @@
 <script>
 export default {
   components: {
-    HomeAppBar: () => import('./home/AppBar.vue'),
     HomeView: () => import('./home/View.vue')
   },
   data() {
