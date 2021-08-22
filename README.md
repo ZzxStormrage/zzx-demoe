@@ -6,8 +6,11 @@
  * @Description: In User Settings Edit
  * @FilePath: /cloud-media-web/README.md
 -->
-# cloud-media-web
-
+# zzx-demo
+```
+cnpm i 
+npm run dev  // 启动项目
+```
 # 目录结构
 ```
 ├── .vscode                    # vscode 配置 自动保存格式化
