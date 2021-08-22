@@ -1,7 +1,9 @@
 
 const tackList = [
   {
-    name: 'track_1',
+    name: 'track_1', // 股道名称
+    color: '#fff',
+    // 线的坐标 相对于画布位置  开始X轴位置 开始y轴位置 结束X轴位置 结束y轴位置
     coordinate: [
       [200, 500, 1200, 500],
       [1200, 500, 1250, 550],
@@ -9,11 +11,23 @@ const tackList = [
       [1250, 650, 1200, 700],
       [1200, 700, 100, 700]
     ],
+    // 土挡的位置
+    soilBlock: {
+      name: '土挡1',
+      coordinate: [200, 500],
+      direction: 'right' // right or left
+    },
+    // 脱轨器
+    derailer: {
+      name: '脱轨器-01',
+      coordinate: [220, 500]
+    },
+    // 灯的坐标 相对于画布
     lamp: [
       {
         name: 'd3',
         color: 'blue',
-        coordinate: [300, 500]
+        coordinate: [300, 500] // 灯的坐标
       },
       {
         name: 'd3',
@@ -93,25 +107,39 @@ export default class TrackCanvas {
   }
   draw() {
     const w = 2
-    const color = '#ccc'
-
     const { width, height, bgc } = this.options
 
     this.ctx.fillStyle = bgc
     this.ctx.fillRect(0, 0, width, height)
 
     for (let i = 0; i < tackList.length; i++) {
-      const { coordinate, lamp } = tackList[i]
+      const { coordinate, lamp, soilBlock, color, derailer } = tackList[i]
 
+      // 绘制轨道
       for (let j = 0; j < coordinate.length; j++) {
         const { beginX, beginY, endX, endY } = this.getCoordinate(coordinate[j])
         this.drawLine(beginX, beginY, endX, endY, color, w)
       }
 
+      // 绘制灯
       for (let j = 0; j < lamp.length; j++) {
         const { coordinate, name, color } = lamp[j]
         const { beginX, beginY } = this.getCoordinate(coordinate)
         this.drawLamp(beginX, beginY, LampSize, color, name)
+      }
+
+      // 绘制土挡
+      if (soilBlock) {
+        const { coordinate } = soilBlock
+        const { beginX, beginY } = this.getCoordinate(coordinate)
+        this.drawSoilBlock(beginX, beginY)
+      }
+
+      // 绘制脱轨器
+      if (derailer) {
+        const { coordinate, name } = derailer
+        const { beginX, beginY } = this.getCoordinate(coordinate)
+        this.drawDerailer(beginX, beginY, name)
       }
     }
   }
@@ -137,10 +165,39 @@ export default class TrackCanvas {
     this.drawText(text, x, y)
   }
 
-  drawText(text, x, y) {
-    this.ctx.fillStyle = '#fff'
+  drawText(text, x, y, color = '#fff') {
+    this.ctx.fillStyle = color
     this.ctx.font = '18px Arial'
     this.ctx.fillText(text, x, y)
+  }
+
+  drawDerailer(x, y, name, color = 'blue') {
+    // 填充三角形（等边）
+    this.ctx.beginPath()
+    const size = 30
+    var height = size * Math.sin(Math.PI / 3)
+    this.ctx.moveTo(x, y)
+    this.ctx.lineTo(x + height, y - height)
+    this.ctx.lineTo(x - height, y - height)
+    this.ctx.lineTo(x, y)
+
+    this.ctx.strokeStyle = color
+    this.ctx.lineWidth = 3
+    this.ctx.stroke()
+    this.drawText(name, x - size, y - size - 10)
+  }
+
+  drawSoilBlock(x, y, color = 'yellow') {
+    this.ctx.beginPath()
+    const height = 10
+    const width = 20
+    this.ctx.moveTo(x, y - height)
+    this.ctx.lineTo(x, y + height)
+    this.ctx.lineTo(x - width, y + height)
+    this.ctx.moveTo(x, y - height)
+    this.ctx.lineTo(x - width, y - height)
+    this.ctx.strokeStyle = color
+    this.ctx.stroke()
   }
 
   drawCart(cart) {
@@ -155,8 +212,7 @@ export default class TrackCanvas {
     this.ctx.moveTo(beginX, beginY)
     this.ctx.lineTo(beginX + size, beginY - height)
     this.ctx.lineTo(beginX - size, beginY - height)
-
-    this.ctx.fillStyle = '#fff'
+    this.ctx.strokeStyle = '#fff'
     this.ctx.fill()
     this.ctx.stroke()
     this.drawText(name, beginX - size * 2, beginY - height - 10)

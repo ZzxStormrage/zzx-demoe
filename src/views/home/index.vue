@@ -28,7 +28,7 @@ export default {
     this.TrackCanvas = new TrackCanvas(parent)
     this.TrackCanvas.draw()
 
-    if (this.cart.coordinate[0] >= 2000) {
+    if (this.cart.coordinate[0] >= 1000) {
       clearInterval(this.time)
       this.time = null
     } else {
