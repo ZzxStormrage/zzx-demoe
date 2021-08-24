@@ -1,89 +1,16 @@
 
-const tackList = [
-  {
-    name: 'track_1', // 股道名称
-    color: '#fff',
-    // 线的坐标 相对于画布位置  开始X轴位置 开始y轴位置 结束X轴位置 结束y轴位置
-    coordinate: [
-      [200, 500, 1200, 500],
-      [1200, 500, 1250, 550],
-      [1250, 550, 1250, 650],
-      [1250, 650, 1200, 700],
-      [1200, 700, 100, 700]
-    ],
-    // 土挡的位置
-    soilBlock: {
-      name: '土挡1',
-      coordinate: [200, 500],
-      direction: 'right' // right or left
-    },
-    // 脱轨器
-    derailer: {
-      name: '脱轨器-01',
-      coordinate: [220, 500]
-    },
-    // 灯的坐标 相对于画布
-    lamp: [
-      {
-        name: 'd3',
-        color: 'blue',
-        coordinate: [300, 500] // 灯的坐标
-      },
-      {
-        name: 'd3',
-        color: 'blue',
-        coordinate: [600, 500]
-      },
-      {
-        name: 'd3',
-        color: 'blue',
-        coordinate: [900, 500]
-      },
-      {
-        name: 'd3',
-        color: 'blue',
-        coordinate: [1200, 500]
-      },
-      {
-        name: 'd3',
-        color: 'red',
-        coordinate: [200, 700]
-      },
-      {
-        name: 'd3',
-        color: 'red',
-        coordinate: [300, 700]
-      },
-      {
-        name: 'd3',
-        color: 'red',
-        coordinate: [600, 700]
-      },
-      {
-        name: 'd3',
-        color: 'red',
-        coordinate: [1100, 700]
-      }
-    ]
-  }
-]
-
-// const cart = {
-//   name: 'DF4D147',
-//   typeName: 'track_1',
-//   coordinate: [400, 500]
-// }
-
 const LampSize = 8
 export default class TrackCanvas {
-  constructor(el, options) {
-    this.options = {
+  constructor(el, tackList, options) {
+    this.options = Object.assign({
       width: 2000,
       height: 2000,
       bgc: '#000'
-    }
+    }, options)
+    this.tackList = tackList
     this.canvas = null
     this.ctx = null
+    this.ctxScale = 1
     this.init(el)
   }
 
@@ -103,6 +30,7 @@ export default class TrackCanvas {
     this.canvas.style.height = height + 'px'
     this.ctx.scale(ratio, ratio)
 
+    this.addCanvasEvents()
     parent.appendChild(this.canvas)
   }
   draw() {
@@ -112,8 +40,8 @@ export default class TrackCanvas {
     this.ctx.fillStyle = bgc
     this.ctx.fillRect(0, 0, width, height)
 
-    for (let i = 0; i < tackList.length; i++) {
-      const { coordinate, lamp, soilBlock, color, derailer } = tackList[i]
+    for (let i = 0; i < this.tackList.length; i++) {
+      const { coordinate, lamp, soilBlock, color, derailer } = this.tackList[i]
 
       // 绘制轨道
       for (let j = 0; j < coordinate.length; j++) {
@@ -202,7 +130,6 @@ export default class TrackCanvas {
 
   drawCart(cart) {
     if (!cart) return
-    console.log('drawCart', cart)
     const size = 15
     const height = 40
 
@@ -219,8 +146,9 @@ export default class TrackCanvas {
   }
 
   clearCanvas() {
-    const { width, height } = this.options
-    this.ctx.clearRect(0, 0, width, height)
+    var p1 = this.ctx.transformedPoint(0, 0)
+    var p2 = this.ctx.transformedPoint(this.canvas.width, this.canvas.height)
+    this.ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y)
   }
 
   getCoordinate(arr) {
@@ -228,4 +156,152 @@ export default class TrackCanvas {
       beginX: arr[0], beginY: arr[1], endX: arr[2], endY: arr[3]
     }
   }
+
+  canvasScale(x, y) {
+    this.ctx.scale(x, y)
+  }
+
+  reset() {
+    this.clearCanvas()
+
+    this.draw()
+    this.drawCart()
+  }
+
+  addCanvasEvents() {
+    this.trackTransforms(this.ctx)
+    let lastX = this.canvas.width / 2
+    let lastY = this.canvas.height / 2
+    let dragStart, dragged
+
+    this.canvas.addEventListener('mousedown', (evt) => {
+      document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body
+        .style.userSelect = 'none'
+      lastX = evt.offsetX || (evt.pageX - this.canvas.offsetLeft)
+      lastY = evt.offsetY || (evt.pageY - this.canvas.offsetTop)
+      dragStart = this.ctx.transformedPoint(lastX, lastY)
+      dragged = false
+    }, false)
+
+    this.canvas.addEventListener('mousemove', (evt) => {
+      lastX = evt.offsetX || (evt.pageX - this.canvas.offsetLeft)
+      lastY = evt.offsetY || (evt.pageY - this.canvas.offsetTop)
+      dragged = true
+      if (dragStart) {
+        const pt = this.ctx.transformedPoint(lastX, lastY)
+        this.ctx.translate(pt.x - dragStart.x, pt.y - dragStart.y)
+        this.reset()
+      }
+    }, false)
+
+    this.canvas.addEventListener('mouseup', (evt) => {
+      dragStart = null
+      if (!dragged) zoom(evt.shiftKey ? -1 : 1)
+    }, false)
+
+    const scaleFactor = 1.1
+
+    const zoom = (clicks) => {
+      const pt = this.ctx.transformedPoint(lastX, lastY)
+      this.ctx.translate(pt.x, pt.y)
+      const factor = Math.pow(scaleFactor, clicks)
+      this.ctx.scale(factor, factor)
+      this.ctx.translate(-pt.x, -pt.y)
+      this.reset()
+    }
+
+    const handleScroll = (evt) => {
+      const delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0
+      if (delta) zoom(delta)
+      return evt.preventDefault() && false
+    }
+    this.canvas.addEventListener('DOMMouseScroll', handleScroll, false)
+    this.canvas.addEventListener('mousewheel', handleScroll, false)
+  }
+
+  trackTransforms(ctx) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    let xform = svg.createSVGMatrix()
+    ctx.getTransform = () => { return xform }
+
+    const savedTransforms = []
+    const save = ctx.save
+    ctx.save = () => {
+      savedTransforms.push(xform.translate(0, 0))
+      return save.call(ctx)
+    }
+    const restore = ctx.restore
+    ctx.restore = () => {
+      xform = savedTransforms.pop()
+      return restore.call(ctx)
+    }
+
+    const scale = ctx.scale
+    ctx.scale = (sx, sy) => {
+      xform = xform.scaleNonUniform(sx, sy)
+      return scale.call(ctx, sx, sy)
+    }
+    const rotate = ctx.rotate
+    ctx.rotate = (radians) => {
+      xform = xform.rotate(radians * 180 / Math.PI)
+      return rotate.call(ctx, radians)
+    }
+    const translate = ctx.translate
+    ctx.translate = (dx, dy) => {
+      xform = xform.translate(dx, dy)
+      return translate.call(ctx, dx, dy)
+    }
+    const transform = ctx.transform
+    ctx.transform = (a, b, c, d, e, f) => {
+      const m2 = svg.createSVGMatrix()
+      m2.a = a; m2.b = b; m2.c = c; m2.d = d; m2.e = e; m2.f = f
+      xform = xform.multiply(m2)
+      return transform.call(ctx, a, b, c, d, e, f)
+    }
+    const setTransform = ctx.setTransform
+    ctx.setTransform = (a, b, c, d, e, f) => {
+      xform.a = a
+      xform.b = b
+      xform.c = c
+      xform.d = d
+      xform.e = e
+      xform.f = f
+      return setTransform.call(ctx, a, b, c, d, e, f)
+    }
+    const pt = svg.createSVGPoint()
+    ctx.transformedPoint = (x, y) => {
+      pt.x = x; pt.y = y
+      return pt.matrixTransform(xform.inverse())
+    }
+  }
+
+  // addCanvasEvents() {
+  //   this.canvas.onmousedown = (e) => this.onmousedown(e)
+  //   this.canvas.onmousemove = (e) => this.onmousemove(e)
+  //   this.canvas.onmouseup = (e) => this.onmouseup(e)
+  //   this.canvas.onmousewheel = this.canvas.onwheel = (e) => this.onwheel(e)
+  // }
+
+  // onmousedown(e) {
+  // }
+  // onmousemove(e) {
+  // }
+  // onmouseup(e) {
+  // }
+  // onwheel(e) {
+  //   const maxScale = 5
+  //   const minScale = 0.2
+  //   const preNumber = 0.1
+
+  //   if (e.wheelDelta > 0) { // 放大
+  //     this.ctxScale = Math.min(this.ctxScale + preNumber, maxScale)
+  //     console.log(this.ctxScale)
+  //   } else { //  缩小
+  //     this.ctxScale = Math.max(this.ctxScale - preNumber, minScale)
+  //     console.log(this.ctxScale)
+  //   }
+  //   this.reset()
+  //   this.canvasScale(this.ctxScale, this.ctxScale)
+  // }
 }
+

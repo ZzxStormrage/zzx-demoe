@@ -13,7 +13,10 @@ import store from './store'
 import '@/styles/index.scss' // global css
 
 import api from './axios/api'
+import { get } from './axios/http'
+
 Vue.prototype.$api = api
+Vue.prototype.$get = get
 
 Vue.config.productionTip = false
 
