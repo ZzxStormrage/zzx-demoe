@@ -4,7 +4,6 @@
 
 <script>
 import TrackCanvas from './track-canvas.js'
-
 import trackList from './track-list.js'
 
 export default {
@@ -68,6 +67,6 @@ export default {
     margin: 20px;
     width: 100%;
     height: 100vh;
-    background: #000;
+    background: #232323;
 }
 </style>

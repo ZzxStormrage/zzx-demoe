@@ -274,34 +274,5 @@ export default class TrackCanvas {
       return pt.matrixTransform(xform.inverse())
     }
   }
-
-  // addCanvasEvents() {
-  //   this.canvas.onmousedown = (e) => this.onmousedown(e)
-  //   this.canvas.onmousemove = (e) => this.onmousemove(e)
-  //   this.canvas.onmouseup = (e) => this.onmouseup(e)
-  //   this.canvas.onmousewheel = this.canvas.onwheel = (e) => this.onwheel(e)
-  // }
-
-  // onmousedown(e) {
-  // }
-  // onmousemove(e) {
-  // }
-  // onmouseup(e) {
-  // }
-  // onwheel(e) {
-  //   const maxScale = 5
-  //   const minScale = 0.2
-  //   const preNumber = 0.1
-
-  //   if (e.wheelDelta > 0) { // 放大
-  //     this.ctxScale = Math.min(this.ctxScale + preNumber, maxScale)
-  //     console.log(this.ctxScale)
-  //   } else { //  缩小
-  //     this.ctxScale = Math.max(this.ctxScale - preNumber, minScale)
-  //     console.log(this.ctxScale)
-  //   }
-  //   this.reset()
-  //   this.canvasScale(this.ctxScale, this.ctxScale)
-  // }
 }
 
