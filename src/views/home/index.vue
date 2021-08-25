@@ -67,6 +67,6 @@ export default {
     margin: 20px;
     width: 100%;
     height: 100vh;
-    background: #232323;
+    background: #000;
 }
 </style>
