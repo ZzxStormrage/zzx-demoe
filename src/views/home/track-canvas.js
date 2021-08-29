@@ -33,7 +33,22 @@ export default class TrackCanvas {
     this.addCanvasEvents()
     parent.appendChild(this.canvas)
   }
+
+  // 绘制股道图
+  drawMapLine(mapList) {
+    const w = 2
+    for (let i = 0; i < mapList.length; i++) {
+      const { coordinate, color, name } = mapList[i]
+      // 绘制轨道
+      for (let j = 0; j < coordinate.length; j++) {
+        const { beginX, beginY, endX, endY } = this.getCoordinate(coordinate[j])
+        this.drawLine(beginX, beginY, endX, endY, color, w)
+      }
+    }
+  }
+
   draw() {
+    if (!this.tackList || this.tackList.length < 1) return
     const w = 2
     const { width, height, bgc } = this.options
 
