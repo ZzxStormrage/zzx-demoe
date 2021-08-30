@@ -9,6 +9,7 @@ export default {
   components: {},
   data() {
     return {
+      data: {},
       TrackCanvas: null,
       maxX: 0,
       minX: 0,
@@ -33,17 +34,22 @@ export default {
     async draw() {
       const data = await this.getTackList()
 
-      const { maxLeft, minLeft, minTop, maxTop } = this.setScale(data.mapLine)
-      this.maxX = maxLeft
-      this.minX = minLeft
-      this.minY = minTop
-      this.maxY = maxTop
+      // 信号灯数据
+      const { mapLine, mapLight } = data
 
-      this.setCanvasSize()
+      // 股道
+      const mapLineTemp = this.setTrackLine(data.mapLine, 'line')
 
-      const mapLine = this.setTrackLine(data.mapLine)
-      console.log('🚀 ~ file: index.vue ~ line 34 ~ draw ~ mapLine', mapLine)
-      this.TrackCanvas.drawMapLine(mapLine)
+      const trackData = {
+        mapLine: mapLineTemp,
+        mapLight: mapLight
+      }
+
+      this.TrackCanvas.setData(trackData)
+      this.TrackCanvas.draw()
+
+      const { cenX, cenY } = this.setZoom(mapLineTemp)
+      this.TrackCanvas.translateCanvas(cenX, cenY)
     },
     // 计算 canvas 大小
     setCanvasSize() {
@@ -53,10 +59,7 @@ export default {
       // const h = scaleH * (this.minY - this.minTop)
       // const w = scaleW * (this.maxY - this.minLeft)
       const w = this.maxX - this.minX
-      console.log('🚀 ~ file: index.vue ~ line 56 ~ setCanvasSize ~ w', w)
       const h = this.maxY - this.minY
-      console.log('🚀 ~ file: index.vue ~ line 57 ~ setCanvasSize ~ h', h)
-
       const scaleW = 2000 / w
       const scaleH = 2000 / h
 
@@ -79,42 +82,56 @@ export default {
         })
       })
     },
+
     // 查找最小值 最大值 计算画布位置
-    setScale(list) {
-      const xArr = []
-      const yArr = []
+    setZoom(list) {
+      console.log('🚀 ~ file: index.vue ~ line 86 ~ setScale ~ list', list)
+      let xArr = []
+      let yArr = []
 
       list.forEach(item => {
-        for (let i = 0; i < item.line.length; i++) {
-          const { x, y } = item.line[i]
-          xArr.push(x)
-          yArr.push(y)
+        for (let i = 0; i < item.coordinate.length; i++) {
+          const [x1, y1, x2, y2] = item.coordinate[i]
+          xArr.push(x1, x2)
+          yArr.push(y1, y2)
         }
       })
+
+      xArr = xArr.filter(item => item)
+      yArr = yArr.filter(item => item)
+
+      const maxLeft = Math.max(...xArr)
+      const minLeft = Math.min(...xArr)
+      const minTop = Math.min(...yArr)
+      const maxTop = Math.max(...yArr)
+      const cenX = (parseFloat(maxLeft) + parseFloat(minLeft)) / 2
+      const cenY = (parseFloat(minTop) + parseFloat(maxTop)) / 2
+
       return {
-        maxLeft: Math.max(...xArr),
-        minLeft: Math.min(...xArr),
-        minTop: Math.min(...yArr),
-        maxTop: Math.max(...yArr)
+        cenX: cenX,
+        cenY: cenY
       }
     },
     // 设置轨道数据
-    setTrackLine(list) {
+    setTrackLine(list, key, color = '#fff') {
       const arr = list
       const arrTemp = []
       for (let i = 0; i < arr.length; i++) {
-        const line = arr[i].line
+        const line = arr[i][key]
         const name = arr[i].name
         const coordinate = []
 
         for (let j = 0; j < line.length; j++) {
           const { x, y } = line[j]
-          coordinate.push(x, y)
+          const startX = Number((x / 40).toFixed(2))
+          const startY = Number((y / 40).toFixed(2))
+
+          coordinate.push(startX, startY)
         }
 
         arrTemp.push({
           name: name, // 股道名称
-          color: '#fff',
+          color: color,
           coordinate: this.setCoordinate(coordinate)
         })
       }
@@ -136,7 +153,12 @@ export default {
           startIndex += 2
           endIndex += 2
         }
+
         newArr[i] = arr.slice(startIndex, endIndex)
+        if (String(newArr[i]).includes('undefined')) {
+          console.log(newArr[i])
+          console.log(arr)
+        }
       }
       return newArr
     }
