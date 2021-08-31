@@ -22,6 +22,7 @@ export const constantRoutes = [
         path: '',
         name: 'Home',
         component: () => import('@/views/home/index.vue')
+        // component: () => import('@/views/tracks/index.vue')
       }
     ]
   }

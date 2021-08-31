@@ -30,6 +30,8 @@ export default class TrackCanvas {
     this.canvas.height = height * ratio
     this.canvas.style.width = width + 'px'
     this.canvas.style.height = height + 'px'
+    this.ctx.fillStyle = bgc
+    this.ctx.fill()
     this.ctx.scale(ratio, ratio)
 
     this.addCanvasEvents()
@@ -49,7 +51,9 @@ export default class TrackCanvas {
       for (let j = 0; j < coordinate.length; j++) {
         const { beginX, beginY, endX, endY } = this.getCoordinate(coordinate[j])
         this.drawLine(beginX, beginY, endX, endY, color, w)
-        this.drawText(name, endX, endY, '#00FF7F', 1)
+
+        const textX = (endX - beginX) / 2 + beginX
+        this.drawText(name, textX, endY, '#00FF7F', 1)
       }
     }
   }
@@ -59,10 +63,10 @@ export default class TrackCanvas {
     document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body
       .style.userSelect = 'none'
     const dragStart = this.ctx.transformedPoint(x, y)
-    console.log('🚀 ~ file: track-canvas.js ~ line 62 ~ TrackCanvas ~ translateCanvas ~ dragStart', dragStart)
     if (dragStart) {
       const pt = this.ctx.transformedPoint(x, y)
-      this.ctx.translate(pt.x - dragStart.x, pt.y - dragStart.y)
+      this.ctx.translate(-x / 5, -y / 5)
+      this.ctx.scale(0.4, 0.4)
       this.reset()
     }
   }
