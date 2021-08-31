@@ -123,8 +123,8 @@ export default {
 
         for (let j = 0; j < line.length; j++) {
           const { x, y } = line[j]
-          const startX = Number((x / 40).toFixed(2))
-          const startY = Number((y / 40).toFixed(2))
+          const startX = Number((x / 20).toFixed(2))
+          const startY = Number((y / 20).toFixed(2))
 
           coordinate.push(startX, startY)
         }

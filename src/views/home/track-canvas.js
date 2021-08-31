@@ -50,6 +50,14 @@ export default class TrackCanvas {
       // 绘制轨道
       for (let j = 0; j < coordinate.length; j++) {
         const { beginX, beginY, endX, endY } = this.getCoordinate(coordinate[j])
+        console.log('🚀 ~ file: track-canvas.js ~ line 53 ~ TrackCanvas ~ drawMapLine ~ beginY', beginY)
+        console.log('🚀 ~ file: track-canvas.js ~ line 53 ~ TrackCanvas ~ drawMapLine ~ endY', endY)
+        if (beginY === endY) {
+          console.log(coordinate[j], '高度一样')
+        }
+        if (beginY !== endY) {
+          console.log(coordinate[j], '高度不一样')
+        }
         this.drawLine(beginX, beginY, endX, endY, color, w)
 
         const textX = (endX - beginX) / 2 + beginX
@@ -169,7 +177,7 @@ export default class TrackCanvas {
     this.drawText(text, x, y)
   }
 
-  drawText(text, x, y, color = '#fff', size = 12) {
+  drawText(text, x, y, color = '#fff', size = 10) {
     this.ctx.fillStyle = color
     this.ctx.font = `${size}px`
     this.ctx.fillText(text, x, y)
