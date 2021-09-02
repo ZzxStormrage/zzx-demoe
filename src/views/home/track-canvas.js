@@ -1,5 +1,11 @@
 
 const LampSize = 8
+import getAngle from './get-angle'
+/**
+ * @function drawMapLine 绘制股道图
+ *
+ * @function drawMapLine 绘制岔道
+ */
 export default class TrackCanvas {
   constructor(el, options, data) {
     this.options = Object.assign({
@@ -44,26 +50,47 @@ export default class TrackCanvas {
 
   // 绘制股道图
   drawMapLine(mapLine) {
-    const w = 1
+    const w = 2
     for (let i = 0; i < mapLine.length; i++) {
       const { coordinate, color, name } = mapLine[i]
       // 绘制轨道
       for (let j = 0; j < coordinate.length; j++) {
         const { beginX, beginY, endX, endY } = this.getCoordinate(coordinate[j])
-        console.log('🚀 ~ file: track-canvas.js ~ line 53 ~ TrackCanvas ~ drawMapLine ~ beginY', beginY)
-        console.log('🚀 ~ file: track-canvas.js ~ line 53 ~ TrackCanvas ~ drawMapLine ~ endY', endY)
-        if (beginY === endY) {
-          console.log(coordinate[j], '高度一样')
-        }
-        if (beginY !== endY) {
-          console.log(coordinate[j], '高度不一样')
-        }
         this.drawLine(beginX, beginY, endX, endY, color, w)
 
-        const textX = (endX - beginX) / 2 + beginX
-        this.drawText(name, textX, endY, '#00FF7F', 1)
+        // 绘制文字
+        const sx = Math.min(beginX, endX)
+        const sy = Math.min(endY, beginY)
+        const angle = getAngle(beginX, beginY, endX, endY)
+        const textX = Math.abs(endX - beginX) / 2 + sx
+        const textY = Math.abs(endY - beginY) / 2 + sy + 16
+
+        this.drawText(name, textX, textY, '#00FF7F', 1, angle)
       }
     }
+  }
+
+  // 绘制岔道
+  drawDera(derailer) {
+    for (let i = 0; i < derailer.length; i++) {
+      const item = derailer[i]
+      const { point, name } = item
+      this.drawDerailer(point.x, point.y, name)
+    }
+  }
+
+  drawText(text, x, y, color = '#fff', size = 10, rotate = 0) {
+    this.ctx.font = `${size}px`
+    this.ctx.fillStyle = color
+
+    // 中心位置旋转
+    // const strWidth = this.ctx.measureText(text).width
+    this.ctx.save()
+    this.ctx.translate(x, y)
+    this.ctx.rotate(rotate * Math.PI / 180)
+    this.ctx.fillStyle = color
+    this.ctx.fillText(text, 0, 0)
+    this.ctx.restore()
   }
   // 移动画布
   translateCanvas(x, y) {
@@ -81,41 +108,22 @@ export default class TrackCanvas {
 
   // 绘制信号灯
   drawMapLight(mapLight) {
-    var setColor = (state) => {
-      //  "state":1,  //信号灯的状态 0无 1红 2蓝 3白
-      let color = '#000'
-      switch (state) {
-        case 0:
-          color = '#000'
-          break
-        case 1:
-          color = '#FF0000'
-          break
-        case 2:
-          color = '#0000FF'
-          break
-        case 3:
-          color = '#fff'
-          break
-      }
-      return color
-    }
-
     for (let j = 0; j < mapLight.length; j++) {
       const item = mapLight[j]
-      const beginX = item.point.x / 100
-      const beginY = item.point.y / 100
-      const LampSize = 2
-      const color = setColor(item.state)
-
+      const beginX = item.point.x
+      const beginY = item.point.y
+      const LampSize = 5
+      const color = item.color
       this.drawLamp(beginX, beginY, LampSize, color, item.name)
+      this.drawText(item.name, beginX + LampSize + 2, beginY + LampSize)
     }
   }
 
   draw() {
-    const { mapLine, mapLight } = this.data
-    this.drawMapLine(mapLine)
-    // this.drawMapLight(mapLight)
+    const { mapLine, mapLight, forks, derailer } = this.data
+    mapLine && this.drawMapLine(mapLine)
+    derailer && this.drawDera(derailer)
+    mapLight && this.drawMapLight(mapLight)
   }
 
   // draw() {
@@ -172,31 +180,26 @@ export default class TrackCanvas {
     this.ctx.arc(beginX, beginY, size, 0, Math.PI * 2, false)
     this.ctx.fillStyle = color
     this.ctx.fill()
-    const x = beginX - 1
-    const y = beginY - 1
-    this.drawText(text, x, y)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'white'
+    this.ctx.stroke()
+    // const x = beginX - 1
+    // const y = beginY - 1
+    // this.drawText(text, x + size + 2, y + size)
   }
 
-  drawText(text, x, y, color = '#fff', size = 10) {
-    this.ctx.fillStyle = color
-    this.ctx.font = `${size}px`
-    this.ctx.fillText(text, x, y)
-  }
-
-  drawDerailer(x, y, name, color = 'blue') {
+  drawDerailer(x, y, name, color = 'blue', size = 16) {
     // 填充三角形（等边）
     this.ctx.beginPath()
-    const size = 30
     var height = size * Math.sin(Math.PI / 3)
     this.ctx.moveTo(x, y)
     this.ctx.lineTo(x + height, y - height)
     this.ctx.lineTo(x - height, y - height)
     this.ctx.lineTo(x, y)
-
     this.ctx.strokeStyle = color
-    this.ctx.lineWidth = 3
+    this.ctx.lineWidth = 2
     this.ctx.stroke()
-    this.drawText(name, x - size, y - size - 10)
+    this.drawText(name, x + height + 2, y - 3)
   }
 
   drawSoilBlock(x, y, color = 'yellow') {

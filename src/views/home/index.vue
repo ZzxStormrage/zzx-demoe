@@ -11,6 +11,7 @@ export default {
     return {
       data: {},
       TrackCanvas: null,
+      zoom: 20,
       maxX: 0,
       minX: 0,
       minY: 0,
@@ -35,14 +36,25 @@ export default {
       const data = await this.getTackList()
 
       // 信号灯数据
-      const { mapLine, mapLight } = data
+      const { mapLine, mapLight, Forks } = data
 
       // 股道
       const mapLineTemp = this.setTrackLine(data.mapLine, 'line')
 
+      // 灯数据
+      const mapLightTmep = this.setMapLight(mapLight)
+
+      // 岔道
+      const forks = this.setForks(data.forks, '#FF1493')
+
+      // 脱轨器
+      const derailer = this.setDerailer(data.derailer)
+
       const trackData = {
         mapLine: mapLineTemp,
-        mapLight: mapLight
+        mapLight: mapLightTmep,
+        derailer: derailer,
+        forks: forks
       }
 
       this.TrackCanvas.setData(trackData)
@@ -85,7 +97,6 @@ export default {
 
     // 查找最小值 最大值 计算画布位置
     setZoom(list) {
-      console.log('🚀 ~ file: index.vue ~ line 86 ~ setScale ~ list', list)
       let xArr = []
       let yArr = []
 
@@ -113,7 +124,7 @@ export default {
       }
     },
     // 设置轨道数据
-    setTrackLine(list, key, color = '#fff') {
+    setTrackLine(list, key, c = '#fff') {
       const arr = list
       const arrTemp = []
       for (let i = 0; i < arr.length; i++) {
@@ -121,10 +132,12 @@ export default {
         const name = arr[i].name
         const coordinate = []
 
+        const color = c
+
         for (let j = 0; j < line.length; j++) {
           const { x, y } = line[j]
-          const startX = Number((x / 20).toFixed(2))
-          const startY = Number((y / 20).toFixed(2))
+          const startX = Number((x / this.zoom).toFixed(2))
+          const startY = Number((y / this.zoom).toFixed(2))
 
           coordinate.push(startX, startY)
         }
@@ -135,6 +148,87 @@ export default {
           coordinate: this.setCoordinate(coordinate)
         })
       }
+      return arrTemp
+    },
+    // 设置岔道数据
+    setForks(list, c = '#ff000') {
+      const arrTemp = []
+
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i]
+        const { name, point } = item
+        const pointTemp = {
+          x: point.x / this.zoom,
+          y: point.y / this.zoom
+        }
+        arrTemp.push({
+          name: name || i + 1, // 股道名称
+          color: c,
+          point: pointTemp
+        })
+      }
+
+      return arrTemp
+    },
+
+    // 设置脱轨器
+    setDerailer(list, c = 'blue') {
+      const arrTemp = []
+
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i]
+        const { name, point } = item
+        const pointTemp = {
+          x: point.x / this.zoom,
+          y: point.y / this.zoom
+        }
+        arrTemp.push({
+          name: name || i + 1, // 股道名称
+          color: c,
+          point: pointTemp
+        })
+      }
+
+      return arrTemp
+    },
+    // 设置灯数据
+    setMapLight(mapLight) {
+      const setColor = (state) => {
+      //  "state":1,  //信号灯的状态 0无 1红 2蓝 3白
+        let color = '#000'
+        switch (state) {
+          case 0:
+            color = '#000'
+            break
+          case 1:
+            color = '#FF0000'
+            break
+          case 2:
+            color = '#0000FF'
+            break
+          case 3:
+            color = '#fff'
+            break
+        }
+        return color
+      }
+
+      const arrTemp = []
+
+      for (let i = 0; i < mapLight.length; i++) {
+        const item = mapLight[i]
+        const { line, name, state, point } = item
+        const pointTemp = {
+          x: point.x / this.zoom,
+          y: point.y / this.zoom
+        }
+        arrTemp.push({
+          name: name, // 股道名称
+          color: setColor(state),
+          point: pointTemp
+        })
+      }
+
       return arrTemp
     },
     createdCanvas() {
@@ -155,9 +249,8 @@ export default {
         }
 
         newArr[i] = arr.slice(startIndex, endIndex)
-        if (String(newArr[i]).includes('undefined')) {
+        if (newArr[i].includes(undefined)) {
           console.log(newArr[i])
-          console.log(arr)
         }
       }
       return newArr
