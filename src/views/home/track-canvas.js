@@ -55,7 +55,7 @@ export default class TrackCanvas {
 
   // 绘制股道图
   drawMapLine(mapLine) {
-    const w = 2
+    const w = 3
     for (let i = 0; i < mapLine.length; i++) {
       const {
         coordinate,
@@ -75,18 +75,18 @@ export default class TrackCanvas {
         this.drawLine(beginX, beginY, endX, endY, color, w)
 
         // 绘制文字
-        const sx = Math.min(beginX, endX)
-        const sy = Math.min(endY, beginY)
-        const angle = getAngle(beginX, beginY, endX, endY)
-        const textX = Math.abs(endX - beginX) / 2 + sx
-        const textY = Math.abs(endY - beginY) / 2 + sy + 16
+        // const sx = Math.min(beginX, endX)
+        // const sy = Math.min(endY, beginY)
+        // const angle = getAngle(beginX, beginY, endX, endY)
+        // const textX = Math.abs(endX - beginX) / 2 + sx
+        // const textY = Math.abs(endY - beginY) / 2 + sy + 16
 
         // this.drawText(name, textX, textY, '#00FF7F', 1, angle)
       }
     }
   }
 
-  // 绘制岔道
+  // 绘制脱轨器
   drawDera(derailer) {
     for (let i = 0; i < derailer.length; i++) {
       const item = derailer[i]
@@ -98,19 +98,149 @@ export default class TrackCanvas {
     }
   }
 
-  drawText(text, x, y, color = '#fff', size = 10, rotate = 0) {
-    this.ctx.font = `${size}px`
-    this.ctx.fillStyle = color
+  // 绘制信号灯
+  drawMapLight(mapLight, mapLine) {
+    // 灯的大小
+    const size = 6
 
-    // 中心位置旋转
-    // const strWidth = this.ctx.measureText(text).width
-    this.ctx.save()
-    this.ctx.translate(x, y)
-    this.ctx.rotate((rotate * Math.PI) / 180)
-    this.ctx.fillStyle = color
-    this.ctx.fillText(text, 0, 0)
-    this.ctx.restore()
+    mapLight.forEach(item => {
+      // 获取 相对线的 旋转角度
+      const lineData = mapLine.find(data => data.name === item.trackNo)
+      const { beginX, beginY, endX, endY } = this.getCoordinate(lineData.coordinate[0])
+
+      const angle = getAngle(beginX, beginY, endX, endY)
+
+      let x = item.point.x
+      let y = item.point.y
+      const color = item.color
+      const upDown = item.upDown
+
+      // true 在轨道下方 or 在轨道下方
+      const onUp = !!((upDown === 1 || upDown === 2))
+      if (onUp) {
+        x -= size
+        y -= size
+      } else {
+        x += size
+        y += size
+      }
+
+      this.ctx.save()
+      this.ctx.translate(x, y)
+      this.ctx.rotate((angle * Math.PI) / 180)
+      this.ctx.translate(-x, -y)
+
+      this.ctx.beginPath()
+      this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
+      this.ctx.fillStyle = color
+      this.ctx.fill()
+      this.ctx.lineWidth = 1
+      this.ctx.strokeStyle = 'white'
+      this.ctx.stroke()
+
+      // true 灯朝右 or 朝左
+      const onLeft = !!((upDown === 2 || upDown === 4))
+
+      this.ctx.beginPath()
+      // // 横线
+      const lineW = 5
+      const lineStartX = x + size
+      const lineStartY = y
+      const lineEndX = lineStartX + lineW
+      const lineEndY = y
+      this.drawLine(lineStartX, lineStartY, lineEndX, lineEndY)
+      // 竖线
+      this.ctx.beginPath()
+      const shuLineH = 10
+      const shuLineStartX = x + size + lineW
+      const shuLineStartY = y - shuLineH / 2
+      const shuLineEndX = shuLineStartX
+      const shuLineEndY = shuLineStartY + shuLineH
+      this.drawLine(shuLineStartX, shuLineStartY, shuLineEndX, shuLineEndY)
+      this.ctx.restore()
+    })
+
+    // for (let j = 0; j < mapLight.length; j++) {
+    //   const item = mapLight[j]
+    //   let x = item.point.x
+    //   let y = item.point.y
+    //   const LampSize = 5
+    //   const color = item.color
+    //   const upDown = item.upDown
+
+    //   if (item.name === 'D6' || item.name === 'D2') {
+    //     console.log(upDown)
+    //   }
+
+    //   // 灯的上下位置
+    //   if (upDown === 2 || upDown === 1) {
+    //     x -= LampSize
+    //     y -= LampSize
+    //   } else {
+    //     x += LampSize
+    //     y += LampSize
+    //   }
+
+    //   const lineData = mapLine.find(data => data.name === item.trackNo)
+
+    //   const {
+    //     beginX,
+    //     beginY,
+    //     endX,
+    //     endY
+    //   } = this.getCoordinate(lineData.coordinate[0])
+    //   const angle = getAngle(beginX, beginY, endX, endY)
+
+    //   this.ctx.save()
+    //   this.ctx.translate(x, y)
+    //   this.ctx.rotate((angle * Math.PI) / 180)
+    //   this.ctx.translate(-x, -y)
+
+    //   let lingAngle = 0
+    //   const lineW = 4
+    //   const textX = x + LampSize + lineW + 2
+    //   const textY = y + LampSize - 1
+    //   if (upDown === 2 || upDown === 4) {
+    //     lingAngle = 180 // 灯在朝右
+    //   }
+    //   this.drawLamp(x, y, LampSize, color, item.name, lingAngle)
+    //   this.drawText(item.name, textX, textY, '#fff', 1)
+    //   this.ctx.restore()
+    // }
   }
+
+  drawLamp(x, y, size, color, angle) {
+    // this.ctx.save()
+    // this.ctx.translate(x, y)
+    // this.ctx.rotate((angle * Math.PI) / 180)
+    // this.ctx.translate(-x, -y)
+
+    // this.ctx.beginPath()
+    // this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
+    // this.ctx.fillStyle = color
+    // this.ctx.fill()
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'white'
+    // this.ctx.stroke()
+
+    // // 横线
+    // const lineW = 5
+    // const lineStartX = x + size
+    // const lineStartY = y
+    // const lineEndX = lineStartX + lineW
+    // const lineEndY = y
+    // this.drawLine(lineStartX, lineStartY, lineEndX, lineEndY)
+    // // 竖线
+    // const shuLineH = 10
+    // const shuLineStartX = x + size + lineW
+    // const shuLineStartY = y - shuLineH / 2
+    // const shuLineEndX = shuLineStartX
+    // const shuLineEndY = shuLineStartY + shuLineH
+    // this.drawLine(shuLineStartX, shuLineStartY, shuLineEndX, shuLineEndY)
+
+    // this.ctx.restore()
+  }
+
   // 移动画布
   translateCanvas(x, y) {
     this.trackTransforms(this.ctx)
@@ -125,81 +255,17 @@ export default class TrackCanvas {
     }
   }
 
-  // 绘制信号灯
-  drawMapLight(mapLight, mapLine) {
-    for (let j = 0; j < mapLight.length; j++) {
-      const item = mapLight[j]
-      let x = item.point.x
-      let y = item.point.y
-      const LampSize = 5
-      const color = item.color
-      const upDown = item.upDown
+  drawText(text, x, y, color = '#fff', size = 10, rotate = 0) {
+    this.ctx.font = `${size}px`
+    this.ctx.fillStyle = color
 
-      if (item.name === 'D6' || item.name === 'D2') {
-        console.log(upDown)
-      }
-
-      // 灯的上下位置
-      if (upDown === 2 || upDown === 1) {
-        x -= LampSize
-        y -= LampSize
-      } else {
-        x += LampSize
-        y += LampSize
-      }
-
-      const lineData = mapLine.find(data => data.name === item.trackNo)
-
-      const { beginX, beginY, endX, endY } = this.getCoordinate(lineData.coordinate[0])
-      const angle = getAngle(beginX, beginY, endX, endY)
-
-      this.ctx.save()
-      this.ctx.translate(x, y)
-      this.ctx.rotate((angle * Math.PI) / 180)
-      this.ctx.translate(-x, -y)
-
-      let lingAngle = 0
-      const lineW = 4
-      const textX = x + LampSize + lineW + 2
-      const textY = y + LampSize - 1
-      if (upDown === 2 || upDown === 4) {
-        lingAngle = 180 // 灯在朝右
-      }
-      this.drawLamp(x, y, LampSize, color, item.name, lingAngle)
-      this.drawText(item.name, textX, textY, '#fff', 1)
-      this.ctx.restore()
-    }
-  }
-
-  drawLamp(x, y, size, color, angle) {
+    // 中心位置旋转
+    // const strWidth = this.ctx.measureText(text).width
     this.ctx.save()
     this.ctx.translate(x, y)
-    this.ctx.rotate((angle * Math.PI) / 180)
-    this.ctx.translate(-x, -y)
-
-    this.ctx.beginPath()
-    this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
+    this.ctx.rotate((rotate * Math.PI) / 180)
     this.ctx.fillStyle = color
-    this.ctx.fill()
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'white'
-    this.ctx.stroke()
-
-    // 横线
-    const lineW = 5
-    const lineStartX = x + size
-    const lineStartY = y
-    const lineEndX = lineStartX + lineW
-    const lineEndY = y
-    this.drawLine(lineStartX, lineStartY, lineEndX, lineEndY)
-    // 竖线
-    const shuLineH = 10
-    const shuLineStartX = x + size + lineW
-    const shuLineStartY = y - shuLineH / 2
-    const shuLineEndX = shuLineStartX
-    const shuLineEndY = shuLineStartY + shuLineH
-    this.drawLine(shuLineStartX, shuLineStartY, shuLineEndX, shuLineEndY)
-
+    this.ctx.fillText(text, 0, 0)
     this.ctx.restore()
   }
 

@@ -45,7 +45,7 @@ export default {
       const mapLightTmep = this.setMapLight(mapLight, mapLineTemp)
 
       // 岔道
-      const forksTemp = this.setForks(forks, '')
+      const forksTemp = this.setForks(forks, '#fff')
 
       // 脱轨器
       const derailer = this.setDerailer(data.derailer)
@@ -124,7 +124,7 @@ export default {
       }
     },
     // 设置轨道数据
-    setTrackLine(list, key, c = '#ccc') {
+    setTrackLine(list, key, c = '#DDDDDD') {
       const arr = list
       const arrTemp = []
       for (let i = 0; i < arr.length; i++) {
@@ -151,7 +151,7 @@ export default {
       return arrTemp
     },
     // 设置岔道数据
-    setForks(list, c = '#ff000') {
+    setForks(list, c = '#fff') {
       const arrTemp = []
 
       for (let i = 0; i < list.length; i++) {
