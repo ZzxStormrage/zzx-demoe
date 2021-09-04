@@ -81,7 +81,7 @@ export default class TrackCanvas {
         const textX = Math.abs(endX - beginX) / 2 + sx
         const textY = Math.abs(endY - beginY) / 2 + sy + 16
 
-        this.drawText(name, textX, textY, '#00FF7F', 1, angle)
+        // this.drawText(name, textX, textY, '#00FF7F', 1, angle)
       }
     }
   }
@@ -127,38 +127,80 @@ export default class TrackCanvas {
 
   // 绘制信号灯
   drawMapLight(mapLight, mapLine) {
-    console.log('🚀 ~ file: track-canvas.js ~ line 130 ~ TrackCanvas ~ drawMapLight ~ mapLine', mapLine)
     for (let j = 0; j < mapLight.length; j++) {
       const item = mapLight[j]
-      const beginX = item.point.x
-      const beginY = item.point.y
+      let x = item.point.x
+      let y = item.point.y
       const LampSize = 5
       const color = item.color
       const upDown = item.upDown
 
-      const lineData = mapLine.find(data => data.name === item.name)
-      console.log('🚀 ~ file: track-canvas.js ~ line 140 ~ TrackCanvas ~ drawMapLight ~ lineData', lineData)
-      // const angle = getAngle(beginX, beginY, endX, endY)
-      this.drawLamp(beginX, beginY, LampSize, color, item.name)
+      if (item.name === 'D6' || item.name === 'D2') {
+        console.log(upDown)
+      }
 
-      const lineX = beginX + LampSize
-      const lineY = beginY
+      // 灯的上下位置
+      if (upDown === 2 || upDown === 1) {
+        x -= LampSize
+        y -= LampSize
+      } else {
+        x += LampSize
+        y += LampSize
+      }
+
+      const lineData = mapLine.find(data => data.name === item.trackNo)
+
+      const { beginX, beginY, endX, endY } = this.getCoordinate(lineData.coordinate[0])
+      const angle = getAngle(beginX, beginY, endX, endY)
+
+      this.ctx.save()
+      this.ctx.translate(x, y)
+      this.ctx.rotate((angle * Math.PI) / 180)
+      this.ctx.translate(-x, -y)
+
+      let lingAngle = 0
       const lineW = 4
-
-      this.drawLine(lineX, lineY, lineX + lineW, lineY)
-
-      const shuX = beginX + lineW + LampSize
-      const shuY = beginY - lineW
-      const shuEndX = shuX
-      const shuEndY = shuY + LampSize * 1.7
-
-      this.drawLine(shuX, shuY, shuEndX, shuEndY)
-
-      const textX = beginX + LampSize + lineW + 2
-      const textY = beginY + LampSize - 1
-
-      this.drawText(item.name, textX, textY)
+      const textX = x + LampSize + lineW + 2
+      const textY = y + LampSize - 1
+      if (upDown === 2 || upDown === 4) {
+        lingAngle = 180 // 灯在朝右
+      }
+      this.drawLamp(x, y, LampSize, color, item.name, lingAngle)
+      this.drawText(item.name, textX, textY, '#fff', 1)
+      this.ctx.restore()
     }
+  }
+
+  drawLamp(x, y, size, color, angle) {
+    this.ctx.save()
+    this.ctx.translate(x, y)
+    this.ctx.rotate((angle * Math.PI) / 180)
+    this.ctx.translate(-x, -y)
+
+    this.ctx.beginPath()
+    this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
+    this.ctx.fillStyle = color
+    this.ctx.fill()
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'white'
+    this.ctx.stroke()
+
+    // 横线
+    const lineW = 5
+    const lineStartX = x + size
+    const lineStartY = y
+    const lineEndX = lineStartX + lineW
+    const lineEndY = y
+    this.drawLine(lineStartX, lineStartY, lineEndX, lineEndY)
+    // 竖线
+    const shuLineH = 10
+    const shuLineStartX = x + size + lineW
+    const shuLineStartY = y - shuLineH / 2
+    const shuLineEndX = shuLineStartX
+    const shuLineEndY = shuLineStartY + shuLineH
+    this.drawLine(shuLineStartX, shuLineStartY, shuLineEndX, shuLineEndY)
+
+    this.ctx.restore()
   }
 
   draw() {
@@ -179,7 +221,6 @@ export default class TrackCanvas {
     for (let i = 0; i < forks.length; i++) {
       const item = forks[i]
       const color = forks[i].color
-
       const { x, y } = item.point
       this.drawText(item.name, x, y, color)
     }
@@ -191,16 +232,6 @@ export default class TrackCanvas {
     this.ctx.lineTo(endX + 0.5, endY)
     this.ctx.strokeStyle = color
     this.ctx.lineWidth = width
-    this.ctx.stroke()
-  }
-
-  drawLamp(x, y, size, color, text) {
-    this.ctx.beginPath()
-    this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
-    this.ctx.fillStyle = color
-    this.ctx.fill()
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'white'
     this.ctx.stroke()
   }
 

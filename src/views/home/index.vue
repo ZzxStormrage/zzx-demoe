@@ -124,7 +124,7 @@ export default {
       }
     },
     // 设置轨道数据
-    setTrackLine(list, key, c = '#fff') {
+    setTrackLine(list, key, c = '#ccc') {
       const arr = list
       const arrTemp = []
       for (let i = 0; i < arr.length; i++) {
@@ -217,7 +217,7 @@ export default {
 
       for (let i = 0; i < mapLight.length; i++) {
         const item = mapLight[i]
-        const { line, name, state, point } = item
+        const { line, name, state, point, trackNo } = item
 
         const pointTemp = {
           x: point.x / this.zoom,
@@ -226,7 +226,8 @@ export default {
         arrTemp.push(Object.assign(item, {
           name: name, // 股道名称
           color: setColor(state),
-          point: pointTemp
+          point: pointTemp,
+          trackNo: trackNo
         }))
       }
 
