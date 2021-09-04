@@ -1,4 +1,3 @@
-
 const LampSize = 8
 import getAngle from './get-angle'
 /**
@@ -12,7 +11,9 @@ export default class TrackCanvas {
       width: 2000,
       height: 2000,
       bgc: '#000'
-    }, options)
+    },
+    options
+    )
 
     this.data = data
 
@@ -24,7 +25,11 @@ export default class TrackCanvas {
 
   init(el) {
     const parent = el
-    const { width, height, bgc } = this.options
+    const {
+      width,
+      height,
+      bgc
+    } = this.options
 
     this.canvas = document.createElement('canvas')
     this.ctx = this.canvas.getContext('2d')
@@ -52,10 +57,21 @@ export default class TrackCanvas {
   drawMapLine(mapLine) {
     const w = 2
     for (let i = 0; i < mapLine.length; i++) {
-      const { coordinate, color, name } = mapLine[i]
+      const {
+        coordinate,
+        color,
+        name
+      } = mapLine[i]
       // 绘制轨道
       for (let j = 0; j < coordinate.length; j++) {
-        const { beginX, beginY, endX, endY } = this.getCoordinate(coordinate[j])
+        const {
+          beginX,
+          beginY,
+          endX,
+          endY
+        } = this.getCoordinate(
+          coordinate[j]
+        )
         this.drawLine(beginX, beginY, endX, endY, color, w)
 
         // 绘制文字
@@ -74,7 +90,10 @@ export default class TrackCanvas {
   drawDera(derailer) {
     for (let i = 0; i < derailer.length; i++) {
       const item = derailer[i]
-      const { point, name } = item
+      const {
+        point,
+        name
+      } = item
       this.drawDerailer(point.x, point.y, name)
     }
   }
@@ -87,7 +106,7 @@ export default class TrackCanvas {
     // const strWidth = this.ctx.measureText(text).width
     this.ctx.save()
     this.ctx.translate(x, y)
-    this.ctx.rotate(rotate * Math.PI / 180)
+    this.ctx.rotate((rotate * Math.PI) / 180)
     this.ctx.fillStyle = color
     this.ctx.fillText(text, 0, 0)
     this.ctx.restore()
@@ -95,8 +114,8 @@ export default class TrackCanvas {
   // 移动画布
   translateCanvas(x, y) {
     this.trackTransforms(this.ctx)
-    document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body
-      .style.userSelect = 'none'
+    document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect =
+      'none'
     const dragStart = this.ctx.transformedPoint(x, y)
     if (dragStart) {
       const pt = this.ctx.transformedPoint(x, y)
@@ -107,64 +126,64 @@ export default class TrackCanvas {
   }
 
   // 绘制信号灯
-  drawMapLight(mapLight) {
+  drawMapLight(mapLight, mapLine) {
+    console.log('🚀 ~ file: track-canvas.js ~ line 130 ~ TrackCanvas ~ drawMapLight ~ mapLine', mapLine)
     for (let j = 0; j < mapLight.length; j++) {
       const item = mapLight[j]
       const beginX = item.point.x
       const beginY = item.point.y
       const LampSize = 5
       const color = item.color
+      const upDown = item.upDown
+
+      const lineData = mapLine.find(data => data.name === item.name)
+      console.log('🚀 ~ file: track-canvas.js ~ line 140 ~ TrackCanvas ~ drawMapLight ~ lineData', lineData)
+      // const angle = getAngle(beginX, beginY, endX, endY)
       this.drawLamp(beginX, beginY, LampSize, color, item.name)
-      this.drawText(item.name, beginX + LampSize + 2, beginY + LampSize)
+
+      const lineX = beginX + LampSize
+      const lineY = beginY
+      const lineW = 4
+
+      this.drawLine(lineX, lineY, lineX + lineW, lineY)
+
+      const shuX = beginX + lineW + LampSize
+      const shuY = beginY - lineW
+      const shuEndX = shuX
+      const shuEndY = shuY + LampSize * 1.7
+
+      this.drawLine(shuX, shuY, shuEndX, shuEndY)
+
+      const textX = beginX + LampSize + lineW + 2
+      const textY = beginY + LampSize - 1
+
+      this.drawText(item.name, textX, textY)
     }
   }
 
   draw() {
-    const { mapLine, mapLight, forks, derailer } = this.data
+    const {
+      mapLine,
+      mapLight,
+      forks,
+      derailer
+    } = this.data
     mapLine && this.drawMapLine(mapLine)
     derailer && this.drawDera(derailer)
-    mapLight && this.drawMapLight(mapLight)
+    mapLight && this.drawMapLight(mapLight, mapLine)
+    forks && this.drawForks(forks)
   }
 
-  // draw() {
-  //   if (!this.tackList || this.tackList.length < 1) return
-  //   const w = 2
-  //   const { width, height, bgc } = this.options
+  // 绘制岔道
+  drawForks(forks) {
+    for (let i = 0; i < forks.length; i++) {
+      const item = forks[i]
+      const color = forks[i].color
 
-  //   this.ctx.fillStyle = bgc
-  //   this.ctx.fillRect(0, 0, width, height)
-
-  //   for (let i = 0; i < this.tackList.length; i++) {
-  //     const { coordinate, lamp, soilBlock, color, derailer } = this.tackList[i]
-
-  //     // 绘制轨道
-  //     for (let j = 0; j < coordinate.length; j++) {
-  //       const { beginX, beginY, endX, endY } = this.getCoordinate(coordinate[j])
-  //       this.drawLine(beginX, beginY, endX, endY, color, w)
-  //     }
-
-  //     // 绘制灯
-  //     for (let j = 0; j < lamp.length; j++) {
-  //       const { coordinate, name, color } = lamp[j]
-  //       const { beginX, beginY } = this.getCoordinate(coordinate)
-  //       this.drawLamp(beginX, beginY, LampSize, color, name)
-  //     }
-
-  //     // 绘制土挡
-  //     if (soilBlock) {
-  //       const { coordinate } = soilBlock
-  //       const { beginX, beginY } = this.getCoordinate(coordinate)
-  //       this.drawSoilBlock(beginX, beginY)
-  //     }
-
-  //     // 绘制脱轨器
-  //     if (derailer) {
-  //       const { coordinate, name } = derailer
-  //       const { beginX, beginY } = this.getCoordinate(coordinate)
-  //       this.drawDerailer(beginX, beginY, name)
-  //     }
-  //   }
-  // }
+      const { x, y } = item.point
+      this.drawText(item.name, x, y, color)
+    }
+  }
 
   drawLine(beginX, beginY, endX, endY, color, width) {
     this.ctx.beginPath()
@@ -175,17 +194,14 @@ export default class TrackCanvas {
     this.ctx.stroke()
   }
 
-  drawLamp(beginX, beginY, size, color, text) {
+  drawLamp(x, y, size, color, text) {
     this.ctx.beginPath()
-    this.ctx.arc(beginX, beginY, size, 0, Math.PI * 2, false)
+    this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
     this.ctx.fillStyle = color
     this.ctx.fill()
     this.ctx.lineWidth = 1
     this.ctx.strokeStyle = 'white'
     this.ctx.stroke()
-    // const x = beginX - 1
-    // const y = beginY - 1
-    // this.drawText(text, x + size + 2, y + size)
   }
 
   drawDerailer(x, y, name, color = 'blue', size = 16) {
@@ -220,8 +236,14 @@ export default class TrackCanvas {
     const size = 15
     const height = 40
 
-    const { name, coordinate } = cart
-    const { beginX, beginY } = this.getCoordinate(coordinate)
+    const {
+      name,
+      coordinate
+    } = cart
+    const {
+      beginX,
+      beginY
+    } = this.getCoordinate(coordinate)
     this.ctx.beginPath()
     this.ctx.moveTo(beginX, beginY)
     this.ctx.lineTo(beginX + size, beginY - height)
@@ -240,7 +262,10 @@ export default class TrackCanvas {
 
   getCoordinate(arr) {
     return {
-      beginX: arr[0], beginY: arr[1], endX: arr[2], endY: arr[3]
+      beginX: arr[0],
+      beginY: arr[1],
+      endX: arr[2],
+      endY: arr[3]
     }
   }
 
@@ -260,34 +285,46 @@ export default class TrackCanvas {
     let lastY = this.canvas.height / 2
     let dragStart, dragged
 
-    this.canvas.addEventListener('mousedown', (evt) => {
-      document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body
-        .style.userSelect = 'none'
-      lastX = evt.offsetX || (evt.pageX - this.canvas.offsetLeft)
-      lastY = evt.offsetY || (evt.pageY - this.canvas.offsetTop)
-      dragStart = this.ctx.transformedPoint(lastX, lastY)
-      dragged = false
-    }, false)
+    this.canvas.addEventListener(
+      'mousedown',
+      evt => {
+        document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect =
+          'none'
+        lastX = evt.offsetX || evt.pageX - this.canvas.offsetLeft
+        lastY = evt.offsetY || evt.pageY - this.canvas.offsetTop
+        dragStart = this.ctx.transformedPoint(lastX, lastY)
+        dragged = false
+      },
+      false
+    )
 
-    this.canvas.addEventListener('mousemove', (evt) => {
-      lastX = evt.offsetX || (evt.pageX - this.canvas.offsetLeft)
-      lastY = evt.offsetY || (evt.pageY - this.canvas.offsetTop)
-      dragged = true
-      if (dragStart) {
-        const pt = this.ctx.transformedPoint(lastX, lastY)
-        this.ctx.translate(pt.x - dragStart.x, pt.y - dragStart.y)
-        this.reset()
-      }
-    }, false)
+    this.canvas.addEventListener(
+      'mousemove',
+      evt => {
+        lastX = evt.offsetX || evt.pageX - this.canvas.offsetLeft
+        lastY = evt.offsetY || evt.pageY - this.canvas.offsetTop
+        dragged = true
+        if (dragStart) {
+          const pt = this.ctx.transformedPoint(lastX, lastY)
+          this.ctx.translate(pt.x - dragStart.x, pt.y - dragStart.y)
+          this.reset()
+        }
+      },
+      false
+    )
 
-    this.canvas.addEventListener('mouseup', (evt) => {
-      dragStart = null
-      if (!dragged) zoom(evt.shiftKey ? -1 : 1)
-    }, false)
+    this.canvas.addEventListener(
+      'mouseup',
+      evt => {
+        dragStart = null
+        if (!dragged) zoom(evt.shiftKey ? -1 : 1)
+      },
+      false
+    )
 
     const scaleFactor = 1.1
 
-    const zoom = (clicks) => {
+    const zoom = clicks => {
       const pt = this.ctx.transformedPoint(lastX, lastY)
       this.ctx.translate(pt.x, pt.y)
       const factor = Math.pow(scaleFactor, clicks)
@@ -296,8 +333,12 @@ export default class TrackCanvas {
       this.reset()
     }
 
-    const handleScroll = (evt) => {
-      const delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0
+    const handleScroll = evt => {
+      const delta = evt.wheelDelta
+        ? evt.wheelDelta / 40
+        : evt.detail
+          ? -evt.detail
+          : 0
       if (delta) zoom(delta)
       return evt.preventDefault() && false
     }
@@ -308,7 +349,9 @@ export default class TrackCanvas {
   trackTransforms(ctx) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     let xform = svg.createSVGMatrix()
-    ctx.getTransform = () => { return xform }
+    ctx.getTransform = () => {
+      return xform
+    }
 
     const savedTransforms = []
     const save = ctx.save
@@ -328,8 +371,8 @@ export default class TrackCanvas {
       return scale.call(ctx, sx, sy)
     }
     const rotate = ctx.rotate
-    ctx.rotate = (radians) => {
-      xform = xform.rotate(radians * 180 / Math.PI)
+    ctx.rotate = radians => {
+      xform = xform.rotate((radians * 180) / Math.PI)
       return rotate.call(ctx, radians)
     }
     const translate = ctx.translate
@@ -340,7 +383,12 @@ export default class TrackCanvas {
     const transform = ctx.transform
     ctx.transform = (a, b, c, d, e, f) => {
       const m2 = svg.createSVGMatrix()
-      m2.a = a; m2.b = b; m2.c = c; m2.d = d; m2.e = e; m2.f = f
+      m2.a = a
+      m2.b = b
+      m2.c = c
+      m2.d = d
+      m2.e = e
+      m2.f = f
       xform = xform.multiply(m2)
       return transform.call(ctx, a, b, c, d, e, f)
     }
@@ -356,9 +404,9 @@ export default class TrackCanvas {
     }
     const pt = svg.createSVGPoint()
     ctx.transformedPoint = (x, y) => {
-      pt.x = x; pt.y = y
+      pt.x = x
+      pt.y = y
       return pt.matrixTransform(xform.inverse())
     }
   }
 }
-

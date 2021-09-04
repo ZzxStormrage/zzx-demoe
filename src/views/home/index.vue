@@ -4,6 +4,7 @@
 
 <script>
 import TrackCanvas from './track-canvas.js'
+import getAngle from './get-angle'
 
 export default {
   components: {},
@@ -24,8 +25,7 @@ export default {
   },
   computed: {},
   watch: {},
-  created() {
-  },
+  created() {},
   mounted() {
     this.createdCanvas()
     this.draw()
@@ -36,16 +36,16 @@ export default {
       const data = await this.getTackList()
 
       // 信号灯数据
-      const { mapLine, mapLight, Forks } = data
+      const { mapLine, mapLight, forks } = data
 
       // 股道
-      const mapLineTemp = this.setTrackLine(data.mapLine, 'line')
+      const mapLineTemp = this.setTrackLine(mapLine, 'line')
 
       // 灯数据
-      const mapLightTmep = this.setMapLight(mapLight)
+      const mapLightTmep = this.setMapLight(mapLight, mapLineTemp)
 
       // 岔道
-      const forks = this.setForks(data.forks, '#FF1493')
+      const forksTemp = this.setForks(forks, '')
 
       // 脱轨器
       const derailer = this.setDerailer(data.derailer)
@@ -54,7 +54,7 @@ export default {
         mapLine: mapLineTemp,
         mapLight: mapLightTmep,
         derailer: derailer,
-        forks: forks
+        forks: forksTemp
       }
 
       this.TrackCanvas.setData(trackData)
@@ -192,7 +192,7 @@ export default {
       return arrTemp
     },
     // 设置灯数据
-    setMapLight(mapLight) {
+    setMapLight(mapLight, mapline) {
       const setColor = (state) => {
       //  "state":1,  //信号灯的状态 0无 1红 2蓝 3白
         let color = '#000'
@@ -218,15 +218,16 @@ export default {
       for (let i = 0; i < mapLight.length; i++) {
         const item = mapLight[i]
         const { line, name, state, point } = item
+
         const pointTemp = {
           x: point.x / this.zoom,
           y: point.y / this.zoom
         }
-        arrTemp.push({
+        arrTemp.push(Object.assign(item, {
           name: name, // 股道名称
           color: setColor(state),
           point: pointTemp
-        })
+        }))
       }
 
       return arrTemp
