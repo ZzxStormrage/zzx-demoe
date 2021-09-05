@@ -63,10 +63,10 @@ export default class TrackCanvas {
       maptext,
       mapocs
     } = this.data
+    mapLine && this.drawMapLine(mapLine)
     derailer && this.drawDera(derailer)
     forks && this.drawForks(forks)
     mapLight && this.drawMapLight(mapLight, mapLine)
-    mapLine && this.drawMapLine(mapLine)
     maptext && this.drawMaptext(maptext)
     otherele && this.drawOtherele(otherele)
     mapocs && this.drawMapocs(mapocs)
