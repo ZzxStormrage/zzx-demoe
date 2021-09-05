@@ -36,7 +36,7 @@ export default {
       const data = await this.getTackList()
 
       // 信号灯数据
-      const { mapLine, mapLight, forks } = data
+      const { mapLine, mapLight, forks, maptext, otherele, mapocs } = data
 
       // 股道
       const mapLineTemp = this.setTrackLine(mapLine, 'line')
@@ -50,18 +50,31 @@ export default {
       // 脱轨器
       const derailer = this.setDerailer(data.derailer)
 
+      // 轨道注释
+      const maptextTemp = this.setMapText(maptext, '#00FF7F')
+
+      // 车档数据
+      const othereleTemp = this.setOtherele(otherele, '#FFD700')
+
+      // 终点标
+      const mapocsTemp = this.setMapocs(mapocs, '#FFD700')
+      console.log('🚀 ~ file: index.vue ~ line 61 ~ draw ~ mapocsTemp', mapocsTemp)
+
       const trackData = {
         mapLine: mapLineTemp,
         mapLight: mapLightTmep,
         derailer: derailer,
-        forks: forksTemp
+        forks: forksTemp,
+        maptext: maptextTemp,
+        otherele: othereleTemp,
+        mapocs: mapocsTemp
       }
 
       this.TrackCanvas.setData(trackData)
       this.TrackCanvas.draw()
 
-      const { cenX, cenY } = this.setZoom(mapLineTemp)
-      this.TrackCanvas.translateCanvas(cenX, cenY)
+      // const { cenX, cenY } = this.setZoom(mapLineTemp)
+      this.TrackCanvas.translateCanvas(this.setZoom(mapLineTemp))
     },
     // 计算 canvas 大小
     setCanvasSize() {
@@ -117,14 +130,47 @@ export default {
       const maxTop = Math.max(...yArr)
       const cenX = (parseFloat(maxLeft) + parseFloat(minLeft)) / 2
       const cenY = (parseFloat(minTop) + parseFloat(maxTop)) / 2
+      const scaleX = 2000 / (maxLeft - minLeft)
+      const scaleY = 2000 / (maxTop - minTop)
 
       return {
+        scaleX: scaleX,
+        scaleY: scaleY,
         cenX: cenX,
-        cenY: cenY
+        cenY: cenY,
+        maxTop: maxTop,
+        minLeft: minLeft
       }
     },
+    // 设置终点标
+    setMapocs(list, c = '#888888') {
+      const arrTemp = []
+      list.forEach(item => {
+        const coordinate = []
+        const { name, pa, pb, point, trackNo } = item
+        const startX = Number((pa.x / this.zoom).toFixed(2))
+        const startY = Number((pa.y / this.zoom).toFixed(2))
+        const endX = Number((pb.x / this.zoom).toFixed(2))
+        const endY = Number((pb.y / this.zoom).toFixed(2))
+        coordinate.push(startX, startY, endX, endY)
+
+        const pointTemp = {
+          x: point.x / this.zoom,
+          y: point.y / this.zoom
+        }
+
+        arrTemp.push({
+          name: name,
+          coordinate: coordinate,
+          color: c,
+          point: pointTemp
+        })
+      })
+
+      return arrTemp
+    },
     // 设置轨道数据
-    setTrackLine(list, key, c = '#DDDDDD') {
+    setTrackLine(list, key, c = '#888888') {
       const arr = list
       const arrTemp = []
       for (let i = 0; i < arr.length; i++) {
@@ -165,6 +211,28 @@ export default {
           name: name || i + 1, // 股道名称
           color: c,
           point: pointTemp
+        })
+      }
+
+      return arrTemp
+    },
+
+    // 设置轨道注释
+    setMapText(list, c = '#fff') {
+      const arrTemp = []
+
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i]
+        const { name, point, angle } = item
+        const pointTemp = {
+          x: point.x / this.zoom,
+          y: point.y / this.zoom
+        }
+        arrTemp.push({
+          name: name || i + 1, // 股道名称
+          color: c,
+          point: pointTemp,
+          angle: angle
         })
       }
 
@@ -231,6 +299,27 @@ export default {
         }))
       }
 
+      return arrTemp
+    },
+    // 设置车档数据
+    setOtherele(list, color) {
+      const arrTemp = []
+      for (let i = 0; i < list.length; i++) {
+        const line = list[i].line
+        const coordinate = []
+        for (let j = 0; j < line.length; j++) {
+          const { x, y } = line[j]
+          const startX = Number((x / this.zoom).toFixed(2))
+          const startY = Number((y / this.zoom).toFixed(2))
+
+          coordinate.push(startX, startY)
+        }
+
+        arrTemp.push({
+          color: color,
+          coordinate: this.setCoordinate(coordinate)
+        })
+      }
       return arrTemp
     },
     createdCanvas() {

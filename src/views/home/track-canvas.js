@@ -53,6 +53,78 @@ export default class TrackCanvas {
     this.data = data
   }
 
+  draw() {
+    const {
+      mapLine,
+      mapLight,
+      forks,
+      derailer,
+      otherele,
+      maptext,
+      mapocs
+    } = this.data
+    derailer && this.drawDera(derailer)
+    forks && this.drawForks(forks)
+    mapLight && this.drawMapLight(mapLight, mapLine)
+    mapLine && this.drawMapLine(mapLine)
+    maptext && this.drawMaptext(maptext)
+    otherele && this.drawOtherele(otherele)
+    mapocs && this.drawMapocs(mapocs)
+  }
+  // 绘制终点标
+  drawMapocs(list) {
+    const h = 12
+    const w = 4
+    list.forEach(item => {
+      const { x, y } = item.point
+      const beginX = x
+      const beginY = y - h
+      const endX = x
+      const endY = y + h
+      this.drawLine(beginX, beginY, endX, endY, item.color, w)
+
+      const shuX = x
+      const shuY = endY - w / 2
+      const shuEndX = x - 10
+      const shuEndY = shuY
+
+      this.drawLine(shuX, shuY, shuEndX, shuEndY, item.color, w)
+
+      this.drawText(item.name, beginX + w, beginY + h / 2, item.color, 20)
+    })
+  }
+  // 绘制车档
+  drawOtherele(otherele) {
+    const w = 3
+    for (let i = 0; i < otherele.length; i++) {
+      const { coordinate, color } = otherele[i]
+      // 绘制轨道
+      for (let j = 0; j < coordinate.length; j++) {
+        const {
+          beginX,
+          beginY,
+          endX,
+          endY
+        } = this.getCoordinate(
+          coordinate[j]
+        )
+        this.drawLine(beginX, beginY, endX, endY, color, w)
+      }
+    }
+  }
+
+  // 绘制轨道注释
+  drawMaptext(maptext) {
+    maptext.forEach(item => {
+      const name = item.name
+      const angle = 360 - item.angle
+      const color = item.color
+
+      const { x, y } = item.point
+      this.drawText(name, x, y, color, 15, angle)
+    })
+  }
+
   // 绘制股道图
   drawMapLine(mapLine) {
     const w = 3
@@ -73,15 +145,6 @@ export default class TrackCanvas {
           coordinate[j]
         )
         this.drawLine(beginX, beginY, endX, endY, color, w)
-
-        // 绘制文字
-        // const sx = Math.min(beginX, endX)
-        // const sy = Math.min(endY, beginY)
-        // const angle = getAngle(beginX, beginY, endX, endY)
-        // const textX = Math.abs(endX - beginX) / 2 + sx
-        // const textY = Math.abs(endY - beginY) / 2 + sy + 16
-
-        // this.drawText(name, textX, textY, '#00FF7F', 1, angle)
       }
     }
   }
@@ -101,28 +164,40 @@ export default class TrackCanvas {
   // 绘制信号灯
   drawMapLight(mapLight, mapLine) {
     // 灯的大小
-    const size = 6
+    const size = 4
 
     mapLight.forEach(item => {
       // 获取 相对线的 旋转角度
       const lineData = mapLine.find(data => data.name === item.trackNo)
       const { beginX, beginY, endX, endY } = this.getCoordinate(lineData.coordinate[0])
 
-      const angle = getAngle(beginX, beginY, endX, endY)
+      let angle = getAngle(beginX, beginY, endX, endY)
 
       let x = item.point.x
       let y = item.point.y
       const color = item.color
       const upDown = item.upDown
+      const name = item.name
+
+      // if (beginX === endX) {
+      //   angle = 90
+      // }
+
+      // true 灯朝右 or 朝左
+      const onLeft = !!((upDown === 2 || upDown === 4))
+
+      if (onLeft) {
+        angle += 180
+      }
 
       // true 在轨道下方 or 在轨道下方
       const onUp = !!((upDown === 1 || upDown === 2))
       if (onUp) {
-        x -= size
-        y -= size
+        x -= size + 2
+        y -= size + 2
       } else {
-        x += size
-        y += size
+        x += size + 2
+        y += size + 3
       }
 
       this.ctx.save()
@@ -138,9 +213,6 @@ export default class TrackCanvas {
       this.ctx.strokeStyle = 'white'
       this.ctx.stroke()
 
-      // true 灯朝右 or 朝左
-      const onLeft = !!((upDown === 2 || upDown === 4))
-
       this.ctx.beginPath()
       // // 横线
       const lineW = 5
@@ -148,15 +220,28 @@ export default class TrackCanvas {
       const lineStartY = y
       const lineEndX = lineStartX + lineW
       const lineEndY = y
+
       this.drawLine(lineStartX, lineStartY, lineEndX, lineEndY)
       // 竖线
       this.ctx.beginPath()
-      const shuLineH = 10
+      const shuLineH = 8
       const shuLineStartX = x + size + lineW
       const shuLineStartY = y - shuLineH / 2
       const shuLineEndX = shuLineStartX
       const shuLineEndY = shuLineStartY + shuLineH
       this.drawLine(shuLineStartX, shuLineStartY, shuLineEndX, shuLineEndY)
+
+      // 灯的文字
+      let textX = x + size + lineW + 2
+      let textY = y + size - 1
+      let textRoute = 0
+
+      if (onLeft) {
+        textRoute += 180
+        textX += name.length * 7
+        textY -= size + 2
+      }
+      this.drawText(item.name, textX, textY, '#fff', 1, textRoute)
       this.ctx.restore()
     })
 
@@ -209,48 +294,24 @@ export default class TrackCanvas {
     // }
   }
 
-  drawLamp(x, y, size, color, angle) {
-    // this.ctx.save()
-    // this.ctx.translate(x, y)
-    // this.ctx.rotate((angle * Math.PI) / 180)
-    // this.ctx.translate(-x, -y)
-
-    // this.ctx.beginPath()
-    // this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
-    // this.ctx.fillStyle = color
-    // this.ctx.fill()
-    // this.ctx.lineWidth = 1
-    // this.ctx.strokeStyle = 'white'
-    // this.ctx.stroke()
-
-    // // 横线
-    // const lineW = 5
-    // const lineStartX = x + size
-    // const lineStartY = y
-    // const lineEndX = lineStartX + lineW
-    // const lineEndY = y
-    // this.drawLine(lineStartX, lineStartY, lineEndX, lineEndY)
-    // // 竖线
-    // const shuLineH = 10
-    // const shuLineStartX = x + size + lineW
-    // const shuLineStartY = y - shuLineH / 2
-    // const shuLineEndX = shuLineStartX
-    // const shuLineEndY = shuLineStartY + shuLineH
-    // this.drawLine(shuLineStartX, shuLineStartY, shuLineEndX, shuLineEndY)
-
-    // this.ctx.restore()
-  }
-
-  // 移动画布
-  translateCanvas(x, y) {
+  // 移动画布 设置居中
+  translateCanvas(data) {
+    const {
+      scaleX,
+      scaleY,
+      maxTop,
+      minLeft
+    } = data
     this.trackTransforms(this.ctx)
     document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect =
       'none'
+    const x = maxTop * scaleX
+    const y = minLeft * scaleX
     const dragStart = this.ctx.transformedPoint(x, y)
     if (dragStart) {
       const pt = this.ctx.transformedPoint(x, y)
-      this.ctx.translate(-x / 5, -y / 5)
-      this.ctx.scale(0.4, 0.4)
+      this.ctx.translate(0, 0)
+      this.ctx.scale(scaleX, scaleX)
       this.reset()
     }
   }
@@ -269,26 +330,13 @@ export default class TrackCanvas {
     this.ctx.restore()
   }
 
-  draw() {
-    const {
-      mapLine,
-      mapLight,
-      forks,
-      derailer
-    } = this.data
-    mapLine && this.drawMapLine(mapLine)
-    derailer && this.drawDera(derailer)
-    mapLight && this.drawMapLight(mapLight, mapLine)
-    forks && this.drawForks(forks)
-  }
-
   // 绘制岔道
   drawForks(forks) {
     for (let i = 0; i < forks.length; i++) {
       const item = forks[i]
       const color = forks[i].color
       const { x, y } = item.point
-      this.drawText(item.name, x, y, color)
+      this.drawText(item.name, x, y + 2, color)
     }
   }
 
