@@ -1,10 +1,5 @@
-const LampSize = 8
 import getAngle from './get-angle'
-/**
- * @function drawMapLine 绘制股道图
- *
- * @function drawMapLine 绘制岔道
- */
+
 export default class TrackCanvas {
   constructor(el, options, data) {
     this.options = Object.assign({

@@ -10,6 +10,8 @@ export default {
   components: {},
   data() {
     return {
+      timeer: null,
+      pageSize: 0,
       data: {},
       TrackCanvas: null,
       zoom: 20,
@@ -60,6 +62,8 @@ export default {
       const mapocsTemp = this.setMapocs(mapocs, '#FFD700')
       console.log('🚀 ~ file: index.vue ~ line 61 ~ draw ~ mapocsTemp', mapocsTemp)
 
+      this.getCartData()
+
       const trackData = {
         mapLine: mapLineTemp,
         mapLight: mapLightTmep,
@@ -93,6 +97,7 @@ export default {
         h: scaleH
       }
     },
+
     // 模拟数据请求
     getTackList() {
       return new Promise((resolve, reject) => {
@@ -103,6 +108,44 @@ export default {
           } else {
             reject()
             alert(res.msg || '未知错误')
+          }
+        })
+      })
+    },
+
+    // 模拟请求
+    getCartData() {
+      const ms = 4000
+      this.pageSize++
+      this.clearTimeer()
+
+      this.timeer = setTimeout(() => {
+        const params = {
+          stationId: 11,
+          pageNum: 1,
+          pageSize: this.pageSize
+        }
+        this.getcart(params).then(res => {
+          this.getCartData()
+        }).catch((err) => {
+          alert(err.msg || '未知错误')
+          this.clearTimeer()
+        })
+      }, ms)
+    },
+
+    clearTimeer() {
+      clearInterval(this.timeer)
+      this.timeer = null
+    },
+    // 请求 车的数据
+    getcart(params) {
+      return new Promise((resolve, reject) => {
+        this.$get('http://jiche.4djb.com/railway/train/trainhistoryall', params).then(res => {
+          if (res.code === 200) {
+            resolve(res.data)
+          } else {
+            reject()
           }
         })
       })
