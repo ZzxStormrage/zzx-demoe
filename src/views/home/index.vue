@@ -4,14 +4,15 @@
 
 <script>
 import TrackCanvas from './track-canvas.js'
-import getAngle from './get-angle'
 
 export default {
   components: {},
   data() {
     return {
       timeer: null,
-      pageSize: 0,
+      pageSize: 1,
+      pageNum: 1,
+      mapLineList: [],
       data: {},
       TrackCanvas: null,
       zoom: 20,
@@ -35,14 +36,14 @@ export default {
   methods: {
     // 绘制各种数据
     async draw() {
-      const data = await this.getTackList()
+      this.TrackData = await this.getTackList()
 
       // 信号灯数据
-      const { mapLine, mapLight, forks, maptext, otherele, mapocs } = data
+      const { mapLine, mapLight, forks, maptext, otherele, mapocs } = this.TrackData
 
       // 股道
       const mapLineTemp = this.setTrackLine(mapLine, 'line')
-
+      this.mapLineList = mapLineTemp
       // 灯数据
       const mapLightTmep = this.setMapLight(mapLight, mapLineTemp)
 
@@ -50,7 +51,7 @@ export default {
       const forksTemp = this.setForks(forks, '#fff')
 
       // 脱轨器
-      const derailer = this.setDerailer(data.derailer)
+      const derailer = this.setDerailer(this.TrackData.derailer)
 
       // 轨道注释
       const maptextTemp = this.setMapText(maptext, '#00FF7F')
@@ -119,17 +120,64 @@ export default {
       this.pageSize++
       this.clearTimeer()
 
-      this.timeer = setTimeout(() => {
+      const midpoint = (lat1, long1, lat2, long2, per) => {
+        return [lat1 + (lat2 - lat1) * per, long1 + (long2 - long1) * per]
+      }
+
+      const getPoint = (item) => {
+        return {
+          x1: item[0],
+          y1: item[1],
+          x2: item[2],
+          y2: item[3]
+        }
+      }
+
+      const getWidth = (x1, y1, x2, y2) => {
+        var a = x1 - x2
+        var b = y1 - y2
+        var c = Math.sqrt(a * a + b * b)
+        return c
+      }
+
+      this.timeer = setInterval(() => {
         const params = {
           stationId: 11,
-          pageNum: 1,
+          pageNum: this.pageNum,
           pageSize: this.pageSize
         }
         this.getcart(params).then(res => {
-          this.getCartData()
-        }).catch((err) => {
-          alert(err.msg || '未知错误')
-          this.clearTimeer()
+          const cartName = res.enginetypestr
+          const linename = res.linename
+          let lineper = res.lineper
+          const line = this.mapLineList.find(item => item.name === linename)
+          if (!line) return
+
+          let totalLineWidth = 0
+          const coordinate = line.coordinate
+          coordinate.forEach(item => {
+            const { x1, y1, x2, y2 } = getPoint(item)
+            totalLineWidth += getWidth(x1, y1, x2, y2)
+          })
+
+          let index = 0
+          coordinate.forEach(item => {
+            const { x1, y1, x2, y2 } = getPoint(item)
+            const width = totalLineWidth * lineper
+            if (width > getWidth(x1, y1, x2, y2)) {
+              index++
+              lineper = width / totalLineWidth + lineper
+            }
+          })
+
+          const { x1, y1, x2, y2 } = getPoint(coordinate[index])
+          const point = midpoint(x1, y1, x2, y2, lineper)
+
+          const cart = {
+            name: cartName,
+            coordinate: [point[0], point[1]]
+          }
+          this.TrackCanvas.drawCart(cart)
         })
       }, ms)
     },
@@ -143,8 +191,9 @@ export default {
       return new Promise((resolve, reject) => {
         this.$get('http://jiche.4djb.com/railway/train/trainhistoryall', params).then(res => {
           if (res.code === 200) {
-            resolve(res.data)
+            resolve(res.rows[0])
           } else {
+            alert(res.msg || '未知错误')
             reject()
           }
         })

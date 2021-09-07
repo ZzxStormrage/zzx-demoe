@@ -16,7 +16,7 @@ axios.interceptors.request.use(
     //   config.headers.Authorization = 'Bearer ' + userInfo.access_token
     // }
     // 测试
-    config.headers.Authorization = 'Bearer ' + token
+    // config.headers.Authorization = 'Bearer ' + token
 
     // config.headers['X-Requested-With'] = 'XMLHttpRequest'
     // 指定允许其他域名访问

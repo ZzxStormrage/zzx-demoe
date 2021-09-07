@@ -120,6 +120,32 @@ export default class TrackCanvas {
     })
   }
 
+  // 绘制车
+  drawCart(cart) {
+    if (!cart) return
+    const size = 20
+    const height = 50
+
+    const {
+      name,
+      coordinate
+    } = cart
+
+    const {
+      beginX,
+      beginY
+    } = this.getCoordinate(coordinate)
+    this.ctx.save()
+    this.ctx.beginPath()
+    this.ctx.moveTo(beginX, beginY)
+    this.ctx.lineTo(beginX + size, beginY - height)
+    this.ctx.lineTo(beginX - size, beginY - height)
+    this.ctx.strokeStyle = '#fff'
+    this.ctx.fill()
+    this.ctx.stroke()
+    this.drawText(name, beginX - size * 2, beginY - height - 10)
+  }
+
   // 绘制股道图
   drawMapLine(mapLine) {
     const w = 3
@@ -369,29 +395,6 @@ export default class TrackCanvas {
     this.ctx.lineTo(x - width, y - height)
     this.ctx.strokeStyle = color
     this.ctx.stroke()
-  }
-
-  drawCart(cart) {
-    if (!cart) return
-    const size = 15
-    const height = 40
-
-    const {
-      name,
-      coordinate
-    } = cart
-    const {
-      beginX,
-      beginY
-    } = this.getCoordinate(coordinate)
-    this.ctx.beginPath()
-    this.ctx.moveTo(beginX, beginY)
-    this.ctx.lineTo(beginX + size, beginY - height)
-    this.ctx.lineTo(beginX - size, beginY - height)
-    this.ctx.strokeStyle = '#fff'
-    this.ctx.fill()
-    this.ctx.stroke()
-    this.drawText(name, beginX - size * 2, beginY - height - 10)
   }
 
   clearCanvas() {
