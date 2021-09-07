@@ -153,7 +153,8 @@ export default {
           const cartName = res.enginetypestr
           const linename = res.linename
           let lineper = res.lineper
-          const line = this.mapLineList.find(item => item.name === '67-CD24')
+          const line = this.mapLineList.find(item => item.name === linename)
+          console.log('🚀 ~ file: index.vue ~ line 157 ~ this.getcart ~ line', line)
           if (!line) return
 
           let totalLineWidth = 0
