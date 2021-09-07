@@ -29,6 +29,9 @@ export default {
   computed: {},
   watch: {},
   created() {},
+  beforeDestroy() {
+    this.clearTimeer()
+  },
   mounted() {
     this.createdCanvas()
     this.draw()
@@ -116,7 +119,7 @@ export default {
 
     // 模拟请求
     getCartData() {
-      const ms = 4000
+      const ms = 1000
       this.pageSize++
       this.clearTimeer()
 
@@ -150,7 +153,7 @@ export default {
           const cartName = res.enginetypestr
           const linename = res.linename
           let lineper = res.lineper
-          const line = this.mapLineList.find(item => item.name === linename)
+          const line = this.mapLineList.find(item => item.name === '67-CD24')
           if (!line) return
 
           let totalLineWidth = 0

@@ -143,7 +143,7 @@ export default class TrackCanvas {
     this.ctx.strokeStyle = '#fff'
     this.ctx.fill()
     this.ctx.stroke()
-    this.drawText(name, beginX - size * 2, beginY - height - 10)
+    this.drawText(name, beginX - size, beginY - height - 10)
   }
 
   // 绘制股道图
