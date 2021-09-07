@@ -105,7 +105,7 @@ export default {
     // 模拟数据请求
     getTackList() {
       return new Promise((resolve, reject) => {
-        this.$get('./map.json').then(res => {
+        this.$get('http://jiche.4djb.com/railway/train/map').then(res => {
           if (res.code === 200) {
             this.data = res.data
             resolve(res.data)
