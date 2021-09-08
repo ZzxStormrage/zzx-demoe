@@ -11,7 +11,7 @@ export default {
     return {
       timeer: null,
       pageSize: 1,
-      pageNum: 1,
+      pageNum: 78,
       mapLineList: [],
       data: {},
       TrackCanvas: null,
@@ -120,7 +120,7 @@ export default {
     // 模拟请求
     getCartData() {
       const ms = 1000
-      this.pageSize++
+
       this.clearTimeer()
 
       const midpoint = (lat1, long1, lat2, long2, per) => {
@@ -144,6 +144,8 @@ export default {
       }
 
       this.timeer = setInterval(() => {
+        this.pageNum++
+
         const params = {
           stationId: 11,
           pageNum: this.pageNum,

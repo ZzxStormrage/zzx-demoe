@@ -123,6 +123,9 @@ export default class TrackCanvas {
   // 绘制车
   drawCart(cart) {
     if (!cart) return
+    this.clearCanvas()
+    this.draw()
+
     const size = 20
     const height = 50
 
@@ -135,7 +138,6 @@ export default class TrackCanvas {
       beginX,
       beginY
     } = this.getCoordinate(coordinate)
-    this.ctx.save()
     this.ctx.beginPath()
     this.ctx.moveTo(beginX, beginY)
     this.ctx.lineTo(beginX + size, beginY - height)
