@@ -45,10 +45,10 @@ export default {
       const { mapLine, mapLight, forks, maptext, otherele, mapocs } = this.TrackData
 
       // 股道
-      const mapLineTemp = this.setTrackLine(mapLine, 'line')
+      const mapLineTemp = this.setTrackLine(mapLine, 'line', mapLight)
       this.mapLineList = mapLineTemp
       // 灯数据
-      const mapLightTmep = this.setMapLight(mapLight, mapLineTemp)
+      const mapLightTmep = this.setMapLight(mapLight, mapLine)
 
       // 岔道
       const forksTemp = this.setForks(forks, '#fff')
@@ -64,7 +64,6 @@ export default {
 
       // 终点标
       const mapocsTemp = this.setMapocs(mapocs, '#FFD700')
-      console.log('🚀 ~ file: index.vue ~ line 61 ~ draw ~ mapocsTemp', mapocsTemp)
 
       this.getCartData()
 
@@ -156,7 +155,6 @@ export default {
           const linename = res.linename
           let lineper = res.lineper
           const line = this.mapLineList.find(item => item.name === linename)
-          console.log('🚀 ~ file: index.vue ~ line 157 ~ this.getcart ~ line', line)
           if (!line) return
 
           let totalLineWidth = 0
@@ -183,7 +181,7 @@ export default {
             name: cartName,
             coordinate: [point[0], point[1]]
           }
-          this.TrackCanvas.drawCart(cart)
+          // this.TrackCanvas.drawCart(cart)
         })
       }, ms)
     },
@@ -268,7 +266,7 @@ export default {
       return arrTemp
     },
     // 设置轨道数据
-    setTrackLine(list, key, c = '#888888') {
+    setTrackLine(list, key, lingt) {
       const arr = list
       const arrTemp = []
       for (let i = 0; i < arr.length; i++) {
@@ -276,7 +274,7 @@ export default {
         const name = arr[i].name
         const coordinate = []
 
-        const color = c
+        const color = '#888'
 
         for (let j = 0; j < line.length; j++) {
           const { x, y } = line[j]
@@ -286,10 +284,13 @@ export default {
           coordinate.push(startX, startY)
         }
 
+        const linght = lingt.find(item => item.trackNo === arr[i].name)
+
         arrTemp.push({
           name: name, // 股道名称
           color: color,
-          coordinate: this.setCoordinate(coordinate)
+          coordinate: this.setCoordinate(coordinate),
+          linght: linght
         })
       }
       return arrTemp
@@ -384,6 +385,7 @@ export default {
       for (let i = 0; i < mapLight.length; i++) {
         const item = mapLight[i]
         const { line, name, state, point, trackNo } = item
+        const lineData = mapline.find(item => item.name === trackNo)
 
         const pointTemp = {
           x: point.x / this.zoom,
@@ -393,7 +395,8 @@ export default {
           name: name, // 股道名称
           color: setColor(state),
           point: pointTemp,
-          trackNo: trackNo
+          trackNo: trackNo,
+          lineData: lineData
         }))
       }
 

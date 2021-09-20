@@ -11,7 +11,7 @@ export default class TrackCanvas {
     )
 
     this.data = data
-
+    this.zoomNum = 0
     this.canvas = null
     this.ctx = null
     this.ctxScale = 1
@@ -62,6 +62,7 @@ export default class TrackCanvas {
     derailer && this.drawDera(derailer)
     forks && this.drawForks(forks)
     mapLight && this.drawMapLight(mapLight, mapLine)
+    // mapLight && this.drawMapLightWithling(mapLight)
     maptext && this.drawMaptext(maptext)
     otherele && this.drawOtherele(otherele)
     mapocs && this.drawMapocs(mapocs)
@@ -155,6 +156,7 @@ export default class TrackCanvas {
       const {
         coordinate,
         color,
+        linght,
         name
       } = mapLine[i]
       // 绘制轨道
@@ -168,6 +170,8 @@ export default class TrackCanvas {
           coordinate[j]
         )
         this.drawLine(beginX, beginY, endX, endY, color, w)
+        // const angle = getAngle(beginX, beginY, endX, endY)
+        // linght && this.drawMapLightWithling(linght, angle)
       }
     }
   }
@@ -183,6 +187,78 @@ export default class TrackCanvas {
       this.drawDerailer(point.x, point.y, name)
     }
   }
+  //  绘制信号灯 新版
+  // drawMapLightWithling(item, angle) {
+  //   const size = 4
+  //   const color = item.color
+  //   const upDown = item.upDown
+  //   const name = item.name
+  //   if (name === 'DD49') {
+  //     console.log(angle)
+  //   }
+  //   let x = item.point.x
+  //   let y = item.point.y
+  //   // true 灯朝右 or 朝左
+  //   const onLeft = !!((upDown === 2 || upDown === 4))
+
+  //   if (onLeft) {
+  //     angle += 180
+  //   }
+
+  //   // true 在轨道下方 or 在轨道下方
+  //   const onUp = !!((upDown === 1 || upDown === 2))
+  //   if (onUp) {
+  //     x -= size + 2
+  //     y -= size + 2
+  //   } else {
+  //     x += size + 2
+  //     y += size + 3
+  //   }
+
+  //   this.ctx.save()
+  //   this.ctx.translate(x, y)
+  //   this.ctx.rotate((angle * Math.PI) / 180)
+  //   this.ctx.translate(-x, -y)
+
+  //   this.ctx.beginPath()
+  //   this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
+  //   this.ctx.fillStyle = color
+  //   this.ctx.fill()
+  //   this.ctx.lineWidth = 1
+  //   this.ctx.strokeStyle = 'white'
+  //   this.ctx.stroke()
+
+  //   this.ctx.beginPath()
+  //   // // 横线
+  //   const lineW = 5
+  //   const lineStartX = x + size
+  //   const lineStartY = y
+  //   const lineEndX = lineStartX + lineW
+  //   const lineEndY = y
+
+  //   this.drawLine(lineStartX, lineStartY, lineEndX, lineEndY)
+  //   // 竖线
+  //   this.ctx.beginPath()
+  //   const shuLineH = 8
+  //   const shuLineStartX = x + size + lineW
+  //   const shuLineStartY = y - shuLineH / 2
+  //   const shuLineEndX = shuLineStartX
+  //   const shuLineEndY = shuLineStartY + shuLineH
+  //   this.drawLine(shuLineStartX, shuLineStartY, shuLineEndX, shuLineEndY)
+
+  //   // 灯的文字
+  //   let textX = x + size + lineW + 2
+  //   let textY = y + size - 1
+  //   let textRoute = 0
+
+  //   if (onLeft) {
+  //     textRoute += 180
+  //     textX += name.length * 7
+  //     textY -= size + 2
+  //   }
+  //   this.drawText(item.name, textX, textY, '#fff', 1, textRoute)
+  //   this.ctx.restore()
+  // }
 
   // 绘制信号灯
   drawMapLight(mapLight, mapLine) {
@@ -190,21 +266,22 @@ export default class TrackCanvas {
     const size = 4
 
     mapLight.forEach(item => {
+      console.log('🚀 ~ file: track-canvas.js ~ line 269 ~ TrackCanvas ~ drawMapLight ~ item', item)
       // 获取 相对线的 旋转角度
       const lineData = mapLine.find(data => data.name === item.trackNo)
-      const { beginX, beginY, endX, endY } = this.getCoordinate(lineData.coordinate[0])
+      // const { beginX, beginY, endX, endY } = this.getCoordinate(lineData.coordinate[0])
+      const point = item.lineData.line
+      const beginX = point[0].x
+      const beginY = point[0].y
+      const endX = point[1].x
+      const endY = point[1].y
 
       let angle = getAngle(beginX, beginY, endX, endY)
-
       let x = item.point.x
       let y = item.point.y
       const color = item.color
       const upDown = item.upDown
       const name = item.name
-
-      // if (beginX === endX) {
-      //   angle = 90
-      // }
 
       // true 灯朝右 or 朝左
       const onLeft = !!((upDown === 2 || upDown === 4))
@@ -484,6 +561,15 @@ export default class TrackCanvas {
         : evt.detail
           ? -evt.detail
           : 0
+
+      delta > 0 ? this.zoomNum += 1 : this.zoomNum -= 1
+      if (this.zoomNum < -3 && delta < 0) {
+        return
+      }
+      if (this.zoomNum > 8 && delta > 0) {
+        return
+      }
+
       if (delta) zoom(delta)
       return evt.preventDefault() && false
     }
